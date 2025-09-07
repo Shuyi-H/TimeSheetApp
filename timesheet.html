@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Massage Therapist Hours Calculator</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e6f2ff;
+            color: #333;
+            line-height: 1.6;
+            padding: 15px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #0066cc;
+            margin: 20px 0;
+            font-size: 28px;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        input {
+            width: 100%;
+            padding: 15px;
+            font-size: 20px;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 18px;
+            font-size: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            margin: 8px 0;
+            transition: background-color 0.3s;
+        }
+        
+        button:active {
+            background-color: #3e8e41;
+            transform: scale(0.98);
+        }
+        
+        .clear-btn {
+            background-color: #f44336;
+        }
+        
+        .clear-btn:active {
+            background-color: #d32f2f;
+        }
+        
+        .calculate-btn {
+            background-color: #2196F3;
+        }
+        
+        .calculate-btn:active {
+            background-color: #0b7dda;
+        }
+        
+        .appointment-list {
+            margin: 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .appointment-item {
+            background-color: #f9f9f9;
+            border-left: 5px solid #2196F3;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            font-size: 18px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .appointment-minutes {
+            color: #888;
+            font-size: 16px;
+        }
+        
+        .total-display {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #0066cc;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #e0ebeb;
+            border-radius: 10px;
+        }
+        
+        .breakdown {
+            font-size: 38px;
+            color: #742626;
+            margin-top: 10px;
+        }
+        
+        .instructions {
+            background-color: #fff9e6;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 16px;
+        }
+        
+        .instructions h3 {
+            color: #ff9800;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 400px) {
+            body {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            button {
+                padding: 15px;
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Massage Therapist Hours Calculator</h1>
+    
+    <div class="instructions">
+        <h3>How to Use:</h3>
+        <p>1. Enter minutes for each appointment</p>
+        <p>2. Tap "Add Appointment"</p>
+        <p>3. Tap "Calculate Total" when done</p>
+        <p>4. Tap "Clear All" to start over</p>
+    </div>
+    
+    <div class="container">
+        <div class="input-group">
+            <label for="minutes">Enter Minutes:</label>
+            <input type="number" id="minutes" placeholder="e.g., 90 for 1.5 hours" min="1" inputmode="numeric">
+        </div>
+        
+        <button id="add-btn" class="add-btn">Add Appointment</button>
+        <button id="calculate-btn" class="calculate-btn">Calculate Total</button>
+        <button id="clear-btn" class="clear-btn">Clear All</button>
+    </div>
+    
+    <div class="container">
+        <h2>Your Appointments</h2>
+        <div id="appointment-list" class="appointment-list">
+            <p>No appointments yet</p>
+        </div>
+    </div>
+    
+    <div class="total-display">
+        Total: <span id="total">0 hours 0 minutes</span>
+        <div id="breakdown" class="breakdown"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const minutesInput = document.getElementById('minutes');
+            const addBtn = document.getElementById('add-btn');
+            const calculateBtn = document.getElementById('calculate-btn');
+            const clearBtn = document.getElementById('clear-btn');
+            const appointmentList = document.getElementById('appointment-list');
+            const totalDisplay = document.getElementById('total');
+            const breakdownDisplay = document.getElementById('breakdown');
+            
+            let appointments = [];
+            
+            // Focus on input field
+            minutesInput.focus();
+            
+            // Add appointment
+            addBtn.addEventListener('click', function() {
+                const minutes = parseInt(minutesInput.value);
+                
+                if (isNaN(minutes) || minutes <= 0) {
+                    alert('Please enter a valid number of minutes');
+                    return;
+                }
+                
+                appointments.push(minutes);
+                updateAppointmentList();
+                minutesInput.value = '';
+                minutesInput.focus();
+            });
+            
+            // Calculate total - Improved minutes to hours conversion
+            calculateBtn.addEventListener('click', function() {
+                if (appointments.length === 0) {
+                    alert('No appointments to calculate');
+                    return;
+                }
+                
+                const totalMinutes = appointments.reduce((sum, minutes) => sum + minutes, 0);
+                
+                // Calculate hours and minutes
+                const hours = Math.floor(totalMinutes / 60);
+                const minutes = totalMinutes % 60;
+                
+                // Calculate decimal hours (for more precise calculation)
+                const decimalHours = (totalMinutes / 60).toFixed(2);
+                
+                // Format the text
+                let totalText;
+                if (hours === 0) {
+                    totalText = `${totalMinutes} minutes`;
+                } else if (minutes === 0) {
+                    totalText = `${hours} hour${hours !== 1 ? 's' : ''}`;
+                } else {
+                    totalText = `${hours} hour${hours !== 1 ? 's' : ''} ${minutes} minute${minutes !== 1 ? 's' : ''}`;
+                }
+                // Show breakdown
+                breakdownDisplay.innerHTML = `
+                    
+                    ${decimalHours} hours
+                `;
+
+                // Update display
+                totalDisplay.textContent = totalText;
+                
+                
+                
+                // Add encouragement message based on total hours
+                if (hours >= 8) {
+                    breakdownDisplay.innerHTML += `<br><span style="color:#d32f2f;">Long day! Remember to rest</span>`;
+                } else if (hours >= 6) {
+                    breakdownDisplay.innerHTML += `<br><span style="color:#ff9800;">Good work today!</span>`;
+                }
+            });
+            
+            // Clear all
+            clearBtn.addEventListener('click', function() {
+                appointments = [];
+                updateAppointmentList();
+                totalDisplay.textContent = '0 hours 0 minutes';
+                breakdownDisplay.textContent = '';
+                minutesInput.focus();
+            });
+            
+            // Update appointment list display
+            function updateAppointmentList() {
+                appointmentList.innerHTML = '';
+                
+                if (appointments.length === 0) {
+                    appointmentList.innerHTML = '<p>No appointments yet</p>';
+                    return;
+                }
+                
+                appointments.forEach((minutes, index) => {
+                    const hours = Math.floor(minutes / 60);
+                    const mins = minutes % 60;
+                    
+                    let text;
+                    if (hours === 0) {
+                        text = `${minutes} minutes`;
+                    } else if (mins === 0) {
+                        text = `${hours} hour${hours !== 1 ? 's' : ''}`;
+                    } else {
+                        text = `${hours} hour${hours !== 1 ? 's' : ''} ${mins} minute${mins !== 1 ? 's' : ''}`;
+                    }
+                    
+                    const div = document.createElement('div');
+                    div.className = 'appointment-item';
+                    div.innerHTML = `
+                        <span>${index + 1}. ${text}</span>
+                        <span class="appointment-minutes">(${minutes} min)</span>
+                    `;
+                    appointmentList.appendChild(div);
+                });
+            }
+            
+            // Initialize
+            updateAppointmentList();
+            
+            // Allow pressing Enter to add appointments
+            minutesInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addBtn.click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
